@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -44,15 +44,14 @@ def file_preview():
                "Storage-Database": storage_database}
     params = request.args.get('file_path').encode('utf-8')
     file_name = params.split('/')[-1]
+    path_file_download = ROOT_DIR+'/uploads/' + file_name
 
     response = SendRequest(headers, params)
 
     url = response.json()['url']
-
     filedata = requests.get(url)
 
     print(filedata.status_code)
-    path_file_download = ROOT_DIR+'/uploads/' + file_name
 
     if filedata.status_code == 200:
         with open(path_file_download, 'wb') as f:
