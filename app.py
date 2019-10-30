@@ -19,19 +19,19 @@ UPLOAD_FOLDER = '/mnt/z/Developer/Flask/uploads'
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:12345678@localhost/file_convert'
-db = SQLAlchemy(app)
+
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:12345678@localhost/file_convert'
+# db = SQLAlchemy(app)
 
 
-class FileConvert(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(200), nullable=False)
-    data = db.Column(db.LargeBinary)
-    date_created = db.Column(db. DateTime, default=datetime.utcnow)
+# class FileConvert(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     name = db.Column(db.String(200), nullable=False)
+#     data = db.Column(db.LargeBinary)
+#     date_created = db.Column(db. DateTime, default=datetime.utcnow)
 
-    def __repr__(self):
-        return '<FileConvert %r>' % self.id
+#     def __repr__(self):
+#         return '<FileConvert %r>' % self.id
 
 
 @app.route("/filepreview", methods=['POST', 'GET'])
