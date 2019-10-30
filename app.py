@@ -1,13 +1,24 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+import json
+from flask import Flask, render_template, request, send_from_directory
+from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.utils import secure_filename
-
 from datetime import datetime
+
+from convertFile import ConvertFile
+from sendRequest import SendRequest
+
+import requests
+
+
+ROOT_DIR = os.path.dirname(os.path.abspath(
+    __file__))  # This is your Project Root
 
 UPLOAD_FOLDER = '/mnt/z/Developer/Flask/uploads'
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:12345678@localhost/file_convert'
 db = SQLAlchemy(app)
@@ -23,37 +34,34 @@ class FileConvert(db.Model):
         return '<FileConvert %r>' % self.id
 
 
-@app.route("/", methods=['POST', 'GET'])
-def upload_file():
-    if request.method == 'POST':
-        file = request.files['file-upload']
-        if file.filename == '':
-            return 'No selected file'
-        if file:
-            filename_input = secure_filename(file.filename)
+@app.route("/filepreview", methods=['POST', 'GET'])
+@cross_origin()
+def file_preview():
+    token = request.headers['Authorization']
+    storage_database = request.headers['Storage-Database']
 
-            file.save(os.path.join(
-                app.config['UPLOAD_FOLDER'], filename_input))
-            filename_convert = filename_input.split('.')[0] + '.pdf'
-            cmd = 'unoconv -f pdf --output=' + \
-                'file-convert/' + filename_convert + ' ' + 'uploads/' + filename_input
-            os.system(cmd)
+    headers = {'content-type': 'application/json', 'Authorization': token,
+               "Storage-Database": storage_database}
+    params = request.args.get('file_path').encode('utf-8')
+    file_name = params.split('/')[-1]
 
-            file_convert = open(
-                "file-convert/" + filename_convert, "r")
-            if file_convert.mode == 'r':
-                new_file = FileConvert(
-                    name=filename_convert, data=file_convert.read())
-                try:
-                    db.session.add(new_file)
-                    db.session.commit()
-                    return 'Upload success'
-                except:
-                    return 'There was an issue adding to database'
-            else:
-                return 'There was an issue reading file convert'
-    else:
-        return render_template('index.html')
+    response = SendRequest(headers, params)
+
+    url = response.json()['url']
+
+    filedata = requests.get(url)
+
+    print(filedata.status_code)
+    path_file_download = ROOT_DIR+'/uploads/' + file_name
+
+    if filedata.status_code == 200:
+        with open(path_file_download, 'wb') as f:
+            f.write(filedata.content)
+
+    ConvertFile(path_file_download)
+    file_name_convert = file_name.split('.')[0] + '.pdf'
+
+    return open(ROOT_DIR+'/uploads/'+file_name_convert, "rb").read().encode("base64")
 
 
 if __name__ == "__main__":
