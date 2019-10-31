@@ -52,6 +52,8 @@ def file_preview():
     filedata = requests.get(url)
 
     print(filedata.status_code)
+    if filedata.status_code == 404:
+        return 'NOOO FILE PREVIEW'
 
     if filedata.status_code == 200:
         with open(path_file_download, 'wb') as f:
