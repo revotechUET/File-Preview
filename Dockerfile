@@ -1,4 +1,4 @@
-FROM python:2.7.17-alpine
+FROM python:3.5.8-alpine
 
 WORKDIR /app
 
@@ -7,7 +7,10 @@ ENV SERVICE=WI_PROJECT_STORAGE
 
 COPY . .
 
-RUN pip install -r requirements.txt
+RUN apk --no-cache add libreoffice \
+        && rm -rf /var/cache/apk/* \
+        && pip install -r requirements.txt \
+        && mkdir -p uploads
 
 EXPOSE 5000
 

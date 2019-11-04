@@ -9,6 +9,7 @@ from convertFile import ConvertFile
 from sendRequest import SendRequest
 
 import requests
+import base64
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(
@@ -42,7 +43,7 @@ def file_preview():
 
     headers = {'content-type': 'application/json', 'Authorization': token,
                "Storage-Database": storage_database}
-    params = request.args.get('file_path').encode('utf-8')
+    params = request.args.get('file_path')
     file_name = params.split('/')[-1]
     path_file_download = ROOT_DIR+'/uploads/' + file_name
 
@@ -62,7 +63,7 @@ def file_preview():
     ConvertFile(path_file_download)
     file_name_convert = file_name.split('.')[0] + '.pdf'
 
-    return open(ROOT_DIR+'/uploads/'+file_name_convert, "rb").read().encode("base64")
+    return base64.b64encode(open(ROOT_DIR+'/uploads/'+file_name_convert, "rb").read())
 
 
 if __name__ == "__main__":

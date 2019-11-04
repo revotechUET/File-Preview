@@ -13,9 +13,10 @@ config.read('config.ini')
 
 def SendRequest(headers, params):
     budget_url = os.getenv('BUDGET_URL') or config['BUDGET_URL']['url'] or "https://users.i2g.cloud"
+    service_config = os.getenv('SERVICE') or config['BUDGET_URL']['service'] or ""
     service_name = ""
-    if os.getenv('SERVICE'):
-        service_name = "&service={}".format(os.getenv('SERVICE'))
+    if service_config:
+        service_name = "&service={}".format(service_config)
     res = requests.get(
         "{}/read-file/preview?file_path={}{}".format(budget_url, requote_uri(params), service_name), headers=headers, verify=False)
     return res
