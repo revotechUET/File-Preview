@@ -8,6 +8,11 @@ ENV SERVICE=WI_PROJECT_STORAGE
 COPY . .
 
 RUN apk --no-cache add libreoffice \
+           	ttf-droid-nonlatin \
+            ttf-droid \
+            ttf-dejavu \
+            ttf-freefont \
+            ttf-liberation \
         && rm -rf /var/cache/apk/* \
         && pip install -r requirements.txt \
         && mkdir -p uploads
