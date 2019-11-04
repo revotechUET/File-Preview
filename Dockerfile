@@ -2,9 +2,6 @@ FROM python:3.5.8-alpine
 
 WORKDIR /app
 
-ENV BUDGET_URL=https://users.i2g.cloud
-ENV SERVICE=WI_PROJECT_STORAGE
-
 COPY . .
 
 RUN apk --no-cache add libreoffice \
@@ -16,6 +13,9 @@ RUN apk --no-cache add libreoffice \
         && rm -rf /var/cache/apk/* \
         && pip install -r requirements.txt \
         && mkdir -p uploads
+
+ENV BUDGET_URL=https://users.i2g.cloud
+ENV SERVICE=WI_PROJECT_STORAGE
 
 EXPOSE 5000
 
