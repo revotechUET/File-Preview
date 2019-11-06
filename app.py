@@ -1,5 +1,4 @@
-import os
-import json
+import os, sys, json, getopt
 from flask import Flask, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from datetime import datetime
@@ -41,7 +40,7 @@ def file_preview():
     storage_database = request.headers['Storage-Database']
 
     headers = {'content-type': 'application/json', 'Authorization': token,
-               "Storage-Database": storage_database}
+            "Storage-Database": storage_database}
     params = request.args.get('file_path')
     file_name = params.split('/')[-1]
     path_file_download = ROOT_DIR+'/uploads/' + file_name
@@ -64,6 +63,16 @@ def file_preview():
 
     return base64.b64encode(open(ROOT_DIR+'/uploads/'+file_name_convert, "rb").read())
 
+def main(argv):
+    port = 5000
+    opts, args = getopt.getopt(argv,"hp:",["port="])
+    if opts:
+        print(opts)
+        for opt, arg in opts:
+            if opt in ("-p", "--port"):
+                port = arg
+    app.run(debug=True, host='0.0.0.0', port=port)
+
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0')
+    main(sys.argv[1:])

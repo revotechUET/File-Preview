@@ -4,3 +4,4 @@ uploads
 templates
 .vscode
 *.pyc
+*env
