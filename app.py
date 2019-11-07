@@ -8,6 +8,7 @@ from sendRequest import SendRequest
 
 import requests
 import base64
+import PyPDF2
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(
@@ -43,25 +44,58 @@ def file_preview():
             "Storage-Database": storage_database}
     params = request.args.get('file_path')
     file_name = params.split('/')[-1]
+    return get_cached_pdf(file_name, headers, params)
+    # path_file_download = ROOT_DIR+'/uploads/' + file_name
+# 
+    # response = SendRequest(headers, params)
+# 
+    # url = response.json()['url']
+    # filedata = requests.get(url)
+# 
+    # if filedata.status_code == 404:
+        # return 'NOOO FILE PREVIEW'
+# 
+    # if filedata.status_code == 200:
+        # with open(path_file_download, 'wb') as f:
+            # f.write(filedata.content)
+# 
+    # ConvertFile(path_file_download)
+    # file_name_convert = file_name.split('.')[0] + '.pdf'
+# 
+    # return base64.b64encode(open(ROOT_DIR+'/uploads/'+file_name_convert, "rb").read())
+
+
+cached_pdf = []
+CACHE_LIFE_TIME = 5 * 60
+def get_cached_pdf(file_name, headers, params):
+    file_name_convert = file_name.split('.')[0] + '.pdf'
+    cached_item = next((item for item in cached_pdf if item['name'] == file_name_convert), None)
+    path_file_converted = ROOT_DIR+'/uploads/'+file_name_convert
+    if cached_item and (datetime.now() - cached_item['ts']).total_seconds() <= CACHE_LIFE_TIME:
+        print((datetime.now() - cached_item['ts']).total_seconds())
+        cached_item['ts'] = datetime.now()
+        return base64.b64encode(open(path_file_converted, "rb").read())
+    cached_item = {}
     path_file_download = ROOT_DIR+'/uploads/' + file_name
-
     response = SendRequest(headers, params)
-
     url = response.json()['url']
     filedata = requests.get(url)
-
-    print(filedata.status_code)
     if filedata.status_code == 404:
-        return 'NOOO FILE PREVIEW'
-
+        return 'NO FILE PREVIEW'
     if filedata.status_code == 200:
         with open(path_file_download, 'wb') as f:
             f.write(filedata.content)
+    try:
+        PyPDF2.PdfFileReader(open(path_file_download, "rb"))
+    except PyPDF2.utils.PdfReadError:
+        ConvertFile(path_file_download)
+    else:
+        path_file_converted = path_file_download
+    cached_item['name'] = file_name_convert
+    cached_item['ts'] = datetime.now()
+    cached_pdf.append(cached_item)
+    return base64.b64encode(open(path_file_converted, "rb").read())
 
-    ConvertFile(path_file_download)
-    file_name_convert = file_name.split('.')[0] + '.pdf'
-
-    return base64.b64encode(open(ROOT_DIR+'/uploads/'+file_name_convert, "rb").read())
 
 def main(argv):
     port = 5000
