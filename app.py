@@ -45,25 +45,13 @@ def file_preview():
     params = request.args.get('file_path')
     file_name = params.split('/')[-1]
     return get_cached_pdf(file_name, headers, params)
-    # path_file_download = ROOT_DIR+'/uploads/' + file_name
-# 
-    # response = SendRequest(headers, params)
-# 
-    # url = response.json()['url']
-    # filedata = requests.get(url)
-# 
-    # if filedata.status_code == 404:
-        # return 'NOOO FILE PREVIEW'
-# 
-    # if filedata.status_code == 200:
-        # with open(path_file_download, 'wb') as f:
-            # f.write(filedata.content)
-# 
-    # ConvertFile(path_file_download)
-    # file_name_convert = file_name.split('.')[0] + '.pdf'
-# 
-    # return base64.b64encode(open(ROOT_DIR+'/uploads/'+file_name_convert, "rb").read())
 
+
+@app.route("/refresh-cache", methods=['POST', 'GET'])
+@cross_origin()
+def refresh_cache():
+    del cached_pdf[:]
+    return 'CACHE EMPTY'
 
 cached_pdf = []
 CACHE_LIFE_TIME = 5 * 60
