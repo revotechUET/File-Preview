@@ -9,7 +9,11 @@ from sendRequest import SendRequest
 import requests
 import base64
 import PyPDF2
+import jwt
+import configparser
 
+config = configparser.ConfigParser()
+config.read('config.ini')
 
 ROOT_DIR = os.path.dirname(os.path.abspath(
     __file__))  # This is your Project Root
@@ -38,33 +42,42 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 @cross_origin()
 def file_preview():
     token = request.headers['Authorization']
+    decoded = jwt.decode(token, os.getenv('SECRET_KEY') or config['SECRET_KEY']['key'])
     storage_database = request.headers['Storage-Database']
 
     headers = {'content-type': 'application/json', 'Authorization': token,
             "Storage-Database": storage_database}
     params = request.args.get('file_path')
-    file_name = params.split('/')[-1]
-    return get_cached_pdf(file_name, headers, params)
+    return get_cached_pdf(headers, params, decoded)
 
 
 @app.route("/refresh-cache", methods=['POST', 'GET'])
 @cross_origin()
 def refresh_cache():
-    del cached_pdf[:]
+    token = request.headers['Authorization']
+    decoded = jwt.decode(token, os.getenv('SECRET_KEY') or config['SECRET_KEY']['key'])
+    cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
+    del cached_pdf[decoded['username']][:]
     return 'CACHE EMPTY'
 
-cached_pdf = []
+cached_pdf = {}
 CACHE_LIFE_TIME = 5 * 60
-def get_cached_pdf(file_name, headers, params):
-    file_name_convert = file_name.split('.')[0] + '.pdf'
-    cached_item = next((item for item in cached_pdf if item['name'] == file_name_convert), None)
-    path_file_converted = ROOT_DIR+'/uploads/'+file_name_convert
+def get_cached_pdf(headers, params, decoded):
+    file_path = params
+    file_name = params.replace('/', '__')
+    file_name_convert = file_name + '.pdf'
+    cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
+    cached_item = next((item for item in cached_pdf[decoded['username']] if item['path'] == file_path), None)
+    upload_folder_path = ROOT_DIR+'/uploads/' + decoded['username']
+    if not os.path.exists(upload_folder_path):
+        os.makedirs(upload_folder_path)
+    path_file_converted = upload_folder_path + '/' + file_name_convert
     if cached_item and (datetime.now() - cached_item['ts']).total_seconds() <= CACHE_LIFE_TIME:
         print((datetime.now() - cached_item['ts']).total_seconds())
         cached_item['ts'] = datetime.now()
         return base64.b64encode(open(path_file_converted, "rb").read())
     cached_item = {}
-    path_file_download = ROOT_DIR+'/uploads/' + file_name
+    path_file_download = upload_folder_path + '/' + file_name
     response = SendRequest(headers, params)
     url = response.json()['url']
     filedata = requests.get(url)
@@ -79,9 +92,9 @@ def get_cached_pdf(file_name, headers, params):
         ConvertFile(path_file_download)
     else:
         path_file_converted = path_file_download
-    cached_item['name'] = file_name_convert
+    cached_item['path'] = file_path
     cached_item['ts'] = datetime.now()
-    cached_pdf.append(cached_item)
+    cached_pdf[decoded['username']].append(cached_item)
     return base64.b64encode(open(path_file_converted, "rb").read())
 
 
@@ -89,7 +102,6 @@ def main(argv):
     port = 5000
     opts, args = getopt.getopt(argv,"hp:",["port="])
     if opts:
-        print(opts)
         for opt, arg in opts:
             if opt in ("-p", "--port"):
                 port = arg
