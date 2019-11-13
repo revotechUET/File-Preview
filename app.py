@@ -72,12 +72,17 @@ def get_cached_pdf(headers, params, decoded):
     if not os.path.exists(upload_folder_path):
         os.makedirs(upload_folder_path)
     path_file_converted = upload_folder_path + '/' + file_name_convert
+    path_file_download = upload_folder_path + '/' + file_name
     if cached_item and (datetime.now() - cached_item['ts']).total_seconds() <= CACHE_LIFE_TIME:
         print((datetime.now() - cached_item['ts']).total_seconds())
         cached_item['ts'] = datetime.now()
-        return base64.b64encode(open(path_file_converted, "rb").read())
+        try:
+            PyPDF2.PdfFileReader(open(path_file_download, "rb"))
+        except PyPDF2.utils.PdfReadError:
+            return base64.b64encode(open(path_file_converted, "rb").read())
+        else:
+            return base64.b64encode(open(path_file_download, "rb").read())
     cached_item = {}
-    path_file_download = upload_folder_path + '/' + file_name
     response = SendRequest(headers, params)
     url = response.json()['url']
     filedata = requests.get(url)
