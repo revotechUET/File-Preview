@@ -1,41 +1,22 @@
 import os, sys, json, getopt
-from flask import Flask, request, send_from_directory
-from flask_cors import CORS, cross_origin
-from datetime import datetime
-
-from convertFile import ConvertFile
-from sendRequest import SendRequest
-
 import requests
 import base64
 import PyPDF2
 import jwt
 import configparser
+from flask import Flask, request, send_from_directory
+from flask_cors import CORS, cross_origin
+from datetime import datetime
+from convertFile import ConvertFile
+from sendRequest import SendRequest
 
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 config = configparser.ConfigParser()
 config.read('config.ini')
-
-ROOT_DIR = os.path.dirname(os.path.abspath(
-    __file__))  # This is your Project Root
-
-UPLOAD_FOLDER = '/mnt/z/Developer/Flask/uploads'
-
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
-
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:12345678@localhost/file_convert'
-# db = SQLAlchemy(app)
-
-
-# class FileConvert(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(200), nullable=False)
-#     data = db.Column(db.LargeBinary)
-#     date_created = db.Column(db. DateTime, default=datetime.utcnow)
-
-#     def __repr__(self):
-#         return '<FileConvert %r>' % self.id
 
 
 @app.route("/filepreview", methods=['POST', 'GET'])
@@ -44,7 +25,6 @@ def file_preview():
     token = request.headers['Authorization']
     decoded = jwt.decode(token, os.getenv('SECRET_KEY') or config['SECRET_KEY']['key'])
     storage_database = request.headers['Storage-Database']
-
     headers = {'content-type': 'application/json', 'Authorization': token,
             "Storage-Database": storage_database}
     params = request.args.get('file_path')
