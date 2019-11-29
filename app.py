@@ -12,6 +12,7 @@ from sendRequest import SendRequest
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+MAX_SIZE = 10485760
 config = configparser.ConfigParser()
 config.read('config.ini')
 app = Flask(__name__)
@@ -22,13 +23,20 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 @app.route("/filepreview", methods=['POST', 'GET'])
 @cross_origin()
 def file_preview():
-    token = request.headers['Authorization']
-    decoded = jwt.decode(token, os.getenv('SECRET_KEY') or config['SECRET_KEY']['key'])
-    storage_database = request.headers['Storage-Database']
-    headers = {'content-type': 'application/json', 'Authorization': token,
-            "Storage-Database": storage_database}
-    params = request.args.get('file_path')
-    return get_cached_pdf(headers, params, decoded)
+    payload = request.get_json()
+    item = payload['item']
+    if item['size'] > MAX_SIZE:
+        toReturn = {}
+        toReturn['isTooBig'] = 1
+        return toReturn
+    else:
+        token = request.headers['Authorization']
+        decoded = jwt.decode(token, os.getenv('SECRET_KEY') or config['SECRET_KEY']['key'])
+        storage_database = request.headers['Storage-Database']
+        headers = {'content-type': 'application/json', 'Authorization': token,
+                "Storage-Database": storage_database}
+        file_path = item['path']
+        return get_cached_pdf(headers, file_path, decoded)
 
 
 @app.route("/refresh-cache", methods=['POST', 'GET'])
@@ -42,9 +50,8 @@ def refresh_cache():
 
 cached_pdf = {}
 CACHE_LIFE_TIME = 5 * 60
-def get_cached_pdf(headers, params, decoded):
-    file_path = params
-    file_name = params.replace('/', '__')
+def get_cached_pdf(headers, file_path, decoded):
+    file_name = file_path.replace('/', '__')
     file_name_convert = file_name + '.pdf'
     cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
     cached_item = next((item for item in cached_pdf[decoded['username']] if item['path'] == file_path), None)
@@ -63,7 +70,7 @@ def get_cached_pdf(headers, params, decoded):
         else:
             return base64.b64encode(open(path_file_download, "rb").read())
     cached_item = {}
-    response = SendRequest(headers, params)
+    response = SendRequest(headers, file_path)
     url = response.json()['url']
     filedata = requests.get(url)
     if filedata.status_code == 404:
