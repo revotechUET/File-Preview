@@ -9,6 +9,7 @@ from flask_cors import CORS, cross_origin
 from datetime import datetime
 from convertFile import ConvertFile
 from sendRequest import SendRequest
+from binaryornot.check import is_binary
 
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -48,6 +49,7 @@ def refresh_cache():
     del cached_pdf[decoded['username']][:]
     return 'CACHE EMPTY'
 
+
 cached_pdf = {}
 CACHE_LIFE_TIME = 5 * 60
 def get_cached_pdf(headers, file_path, decoded):
@@ -78,6 +80,8 @@ def get_cached_pdf(headers, file_path, decoded):
     if filedata.status_code == 200:
         with open(path_file_download, 'wb') as f:
             f.write(filedata.content)
+    if is_binary(path_file_download) and not path_file_download.lower().endswith(('jpg', 'JPG', 'png', 'PNG', 'jpeg', 'JPEG', 'gif', 'GIF', 'bmp', 'BMP', 'svg', 'SVG', 'pdf', 'las', 'asc', 'LAS', 'TXT', 'ASC')):
+        return {'isNotReadable': 1}
     try:
         PyPDF2.PdfFileReader(open(path_file_download, "rb"))
     except PyPDF2.utils.PdfReadError:
