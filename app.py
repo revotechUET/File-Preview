@@ -1,13 +1,16 @@
-import os, sys, json, getopt
+import os
+import sys
+import json
+import getopt
 import requests
 import base64
 import PyPDF2
 import jwt
 import configparser
-from flask import Flask, request, send_from_directory
+from flask import Flask, request
 from flask_cors import CORS, cross_origin
 from datetime import datetime
-from convertFile import ConvertFile
+from convertFile import ConvertFile, ConvertFileExcel
 from sendRequest import SendRequest
 from binaryornot.check import is_binary
 
@@ -32,10 +35,11 @@ def file_preview():
         return toReturn
     else:
         token = request.headers['Authorization']
-        decoded = jwt.decode(token, os.getenv('SECRET_KEY') or config['SECRET_KEY']['key'])
+        decoded = jwt.decode(token, os.getenv('SECRET_KEY')
+                             or config['SECRET_KEY']['key'])
         storage_database = request.headers['Storage-Database']
         headers = {'content-type': 'application/json', 'Authorization': token,
-                "Storage-Database": storage_database}
+                   "Storage-Database": storage_database}
         file_path = item['path']
         return get_cached_pdf(headers, file_path, decoded)
 
@@ -44,7 +48,8 @@ def file_preview():
 @cross_origin()
 def refresh_cache():
     token = request.headers['Authorization']
-    decoded = jwt.decode(token, os.getenv('SECRET_KEY') or config['SECRET_KEY']['key'])
+    decoded = jwt.decode(token, os.getenv('SECRET_KEY')
+                         or config['SECRET_KEY']['key'])
     cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
     del cached_pdf[decoded['username']][:]
     return 'CACHE EMPTY'
@@ -52,11 +57,14 @@ def refresh_cache():
 
 cached_pdf = {}
 CACHE_LIFE_TIME = 5 * 60
+
+
 def get_cached_pdf(headers, file_path, decoded):
     file_name = file_path.replace('/', '__')
     file_name_convert = file_name + '.pdf'
     cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
-    cached_item = next((item for item in cached_pdf[decoded['username']] if item['path'] == file_path), None)
+    cached_item = next(
+        (item for item in cached_pdf[decoded['username']] if item['path'] == file_path), None)
     upload_folder_path = ROOT_DIR+'/uploads/' + decoded['username']
     if not os.path.exists(upload_folder_path):
         os.makedirs(upload_folder_path)
@@ -80,15 +88,18 @@ def get_cached_pdf(headers, file_path, decoded):
     if filedata.status_code == 200:
         with open(path_file_download, 'wb') as f:
             f.write(filedata.content)
-    if is_binary(path_file_download) and not path_file_download.lower().endswith(('jpg', 'JPG', 'png', 'PNG', 'jpeg', 'JPEG', 'gif', 'GIF', 
-            'bmp', 'BMP', 'svg', 'SVG', 'pdf', 'las', 'asc', 'LAS', 'TXT', 
-            'ASC', 'csv', 'CSV', 'xlsx', 'XLSX', 'LSX', 'lsx', 'ppt', 'PPT', 
-            'pptx', 'PPTX', 'doc', 'DOC', 'docx', 'DOCX')):
+    if is_binary(path_file_download) and not path_file_download.lower().endswith(('jpg', 'JPG', 'png', 'PNG', 'jpeg', 'JPEG', 'gif', 'GIF',
+                                                                                  'bmp', 'BMP', 'svg', 'SVG', 'pdf', 'las', 'asc', 'LAS', 'TXT',
+                                                                                  'ASC', 'csv', 'CSV', 'xlsx', 'XLSX', 'XLS', 'xls', 'ppt', 'PPT',
+                                                                                  'pptx', 'PPTX', 'doc', 'DOC', 'docx', 'DOCX')):
         return {'isNotReadable': 1}
     try:
         PyPDF2.PdfFileReader(open(path_file_download, "rb"))
     except PyPDF2.utils.PdfReadError:
-        ConvertFile(path_file_download)
+        if path_file_download.lower().endswith(('xlsx','xls','csv')) :
+            ConvertFileExcel(path_file_download)
+        else:    
+            ConvertFile(path_file_download)
     else:
         path_file_converted = path_file_download
     cached_item['path'] = file_path
@@ -99,7 +110,7 @@ def get_cached_pdf(headers, file_path, decoded):
 
 def main(argv):
     port = 5000
-    opts, args = getopt.getopt(argv,"hp:",["port="])
+    opts, args = getopt.getopt(argv, "hp:", ["port="])
     if opts:
         for opt, arg in opts:
             if opt in ("-p", "--port"):
