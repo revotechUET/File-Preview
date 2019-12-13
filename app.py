@@ -80,7 +80,11 @@ def get_cached_pdf(headers, file_path, decoded):
     if filedata.status_code == 200:
         with open(path_file_download, 'wb') as f:
             f.write(filedata.content)
-    if is_binary(path_file_download) and not path_file_download.lower().endswith(('jpg', 'JPG', 'png', 'PNG', 'jpeg', 'JPEG', 'gif', 'GIF', 'bmp', 'BMP', 'svg', 'SVG', 'pdf', 'las', 'asc', 'LAS', 'TXT', 'ASC', 'csv')):
+    if is_binary(path_file_download) and not path_file_download.lower()
+        .endswith(('jpg', 'JPG', 'png', 'PNG', 'jpeg', 'JPEG', 'gif', 'GIF', 
+            'bmp', 'BMP', 'svg', 'SVG', 'pdf', 'las', 'asc', 'LAS', 'TXT', 
+            'ASC', 'csv', 'CSV', 'xlsx', 'XLSX', 'LSX', 'lsx', 'ppt', 'PPT', 
+            'pptx', 'PPTX')):
         return {'isNotReadable': 1}
     try:
         PyPDF2.PdfFileReader(open(path_file_download, "rb"))
