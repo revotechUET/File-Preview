@@ -84,7 +84,7 @@ def get_cached_pdf(headers, file_path, decoded):
         .endswith(('jpg', 'JPG', 'png', 'PNG', 'jpeg', 'JPEG', 'gif', 'GIF', 
             'bmp', 'BMP', 'svg', 'SVG', 'pdf', 'las', 'asc', 'LAS', 'TXT', 
             'ASC', 'csv', 'CSV', 'xlsx', 'XLSX', 'LSX', 'lsx', 'ppt', 'PPT', 
-            'pptx', 'PPTX')):
+            'pptx', 'PPTX', 'doc', 'DOC', 'docx', 'DOCX')):
         return {'isNotReadable': 1}
     try:
         PyPDF2.PdfFileReader(open(path_file_download, "rb"))
