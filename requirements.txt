@@ -7,3 +7,4 @@ PyPDF2==1.26.0
 pyjwt==1.5.3
 binaryornot==0.4.4
 excel2img==1.4.0
+img2pdf==0.3.3

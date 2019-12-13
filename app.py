@@ -96,9 +96,9 @@ def get_cached_pdf(headers, file_path, decoded):
     try:
         PyPDF2.PdfFileReader(open(path_file_download, "rb"))
     except PyPDF2.utils.PdfReadError:
-        if path_file_download.lower().endswith(('xlsx','xls','csv')) :
+        if path_file_download.lower().endswith(('xlsx', 'xls', 'csv')):
             ConvertFileExcel(path_file_download)
-        else:    
+        else:
             ConvertFile(path_file_download)
     else:
         path_file_converted = path_file_download
@@ -115,7 +115,7 @@ def main(argv):
         for opt, arg in opts:
             if opt in ("-p", "--port"):
                 port = arg
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(debug=True, port=port)
 
 
 if __name__ == "__main__":
