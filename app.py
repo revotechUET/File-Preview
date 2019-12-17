@@ -115,7 +115,7 @@ def main(argv):
         for opt, arg in opts:
             if opt in ("-p", "--port"):
                 port = arg
-    app.run(debug=True, port=port)
+    app.run(debug=True, host='0.0.0.0', port=port)
 
 
 if __name__ == "__main__":
