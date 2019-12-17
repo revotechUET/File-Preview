@@ -10,7 +10,7 @@ import configparser
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
 from datetime import datetime
-from convertFile import ConvertFile, ConvertFileExcel
+from convertFile import ConvertFile#, ConvertFileExcel
 from sendRequest import SendRequest
 from binaryornot.check import is_binary
 
@@ -96,10 +96,10 @@ def get_cached_pdf(headers, file_path, decoded):
     try:
         PyPDF2.PdfFileReader(open(path_file_download, "rb"))
     except PyPDF2.utils.PdfReadError:
-        if path_file_download.lower().endswith(('xlsx', 'xls', 'csv')):
-            ConvertFileExcel(path_file_download)
-        else:
-            ConvertFile(path_file_download)
+        # if path_file_download.lower().endswith(('xlsx', 'xls', 'csv')):
+            # ConvertFileExcel(path_file_download)
+        # else:
+        ConvertFile(path_file_download)
     else:
         path_file_converted = path_file_download
     cached_item['path'] = file_path
