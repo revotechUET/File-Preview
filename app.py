@@ -7,7 +7,7 @@ import base64
 import PyPDF2
 import jwt
 import configparser
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from datetime import datetime
 from convertFile import ConvertFile#, ConvertFileExcel
@@ -44,6 +44,59 @@ def file_preview():
         return get_cached_pdf(headers, file_path, decoded)
 
 
+@app.route("/check-in-cache", methods=['POST', 'GET'])
+@cross_origin()
+def check_in_cache():
+    payload = request.get_json()
+    item = payload['item']
+
+    token = request.headers['Authorization']
+    decoded = jwt.decode(token, os.getenv('SECRET_KEY')
+                         or config['SECRET_KEY']['key'])
+    storage_database = request.headers['Storage-Database']
+    headers = {'content-type': 'application/json', 'Authorization': token,
+               "Storage-Database": storage_database}
+    file_path = item['path']
+
+    file_name = file_path.replace('/', '__')
+    file_name_convert = file_name + '.pdf'
+    cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
+    cached_item = next(
+        (item for item in cached_pdf[decoded['username']] if item['path'] == file_path), None)
+
+    return jsonify(cached_item)
+
+
+@app.route("/remove-file-in-cache", methods=['POST', 'GET'])
+@cross_origin()
+def remove_file_in_cache():
+    payload = request.get_json()
+    item = payload['item']
+
+    token = request.headers['Authorization']
+    decoded = jwt.decode(token, os.getenv('SECRET_KEY')
+                         or config['SECRET_KEY']['key'])
+    storage_database = request.headers['Storage-Database']
+    headers = {'content-type': 'application/json', 'Authorization': token,
+               "Storage-Database": storage_database}
+    file_path = payload['path']
+# 
+    file_name = file_path.replace('/', '__')
+    file_name_convert = file_name + '.pdf'
+    cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
+    cached_item = next(
+        (item for item in cached_pdf[decoded['username']] if item['path'] == file_path), None)
+    if cached_item:
+        cached_pdf[decoded['username']].remove(cached_item)
+        upload_folder_path = ROOT_DIR+'/uploads/' + decoded['username']
+        path_file_converted = upload_folder_path + '/' + file_name_convert
+        path_file_download = upload_folder_path + '/' + file_name
+        for _file in [path_file_download, path_file_converted]:
+            if os.path.exists(_file):
+                os.remove(_file)
+    return jsonify(cached_item)
+
+
 @app.route("/refresh-cache", methods=['POST', 'GET'])
 @cross_origin()
 def refresh_cache():
@@ -56,7 +109,7 @@ def refresh_cache():
 
 
 cached_pdf = {}
-CACHE_LIFE_TIME = 5 * 60
+CACHE_LIFE_TIME = 60 * 60 * 24 * 7 * 4
 
 
 def get_cached_pdf(headers, file_path, decoded):
@@ -88,10 +141,11 @@ def get_cached_pdf(headers, file_path, decoded):
     if filedata.status_code == 200:
         with open(path_file_download, 'wb') as f:
             f.write(filedata.content)
-    if is_binary(path_file_download) and not path_file_download.lower().endswith(('jpg', 'JPG', 'png', 'PNG', 'jpeg', 'JPEG', 'gif', 'GIF',
-                                                                                  'bmp', 'BMP', 'svg', 'SVG', 'pdf', 'las', 'asc', 'LAS', 'TXT',
-                                                                                  'ASC', 'csv', 'CSV', 'xlsx', 'XLSX', 'XLS', 'xls', 'ppt', 'PPT',
-                                                                                  'pptx', 'PPTX', 'doc', 'DOC', 'docx', 'DOCX')):
+    if is_binary(path_file_download) and not path_file_download.lower().endswith(
+            ('jpg', 'JPG', 'png', 'PNG', 'jpeg', 'JPEG', 'gif', 'GIF',
+            'bmp', 'BMP', 'svg', 'SVG', 'pdf', 'las', 'asc', 'LAS', 'TXT',
+            'ASC', 'csv', 'CSV', 'xlsx', 'XLSX', 'XLS', 'xls', 'ppt', 'PPT',
+            'pptx', 'PPTX', 'doc', 'DOC', 'docx', 'DOCX')):
         return {'isNotReadable': 1}
     try:
         PyPDF2.PdfFileReader(open(path_file_download, "rb"))
