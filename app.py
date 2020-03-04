@@ -7,6 +7,7 @@ import base64
 import PyPDF2
 import jwt
 import configparser
+import functools
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from datetime import datetime
@@ -24,36 +25,42 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 
+def check_too_big(func):
+    @functools.wraps(func)
+    def wrapper_check_too_big(*args, **kwargs):
+        payload = request.get_json()
+        item = payload['item']
+        if item['size'] > MAX_SIZE:
+            toReturn = {}
+            toReturn['isTooBig'] = 1
+            return toReturn
+        return func()
+    return wrapper_check_too_big
+
+
+
 @app.route("/filepreview", methods=['POST', 'GET'])
 @cross_origin()
+@check_too_big
 def file_preview():
     payload = request.get_json()
     item = payload['item']
-    if item['size'] > MAX_SIZE:
-        toReturn = {}
-        toReturn['isTooBig'] = 1
-        return toReturn
-    else:
-        token = request.headers['Authorization']
-        decoded = jwt.decode(token, os.getenv('SECRET_KEY')
-                             or config['SECRET_KEY']['key'])
-        storage_database = request.headers['Storage-Database']
-        headers = {'content-type': 'application/json', 'Authorization': token,
-                   "Storage-Database": storage_database}
-        file_path = item['path']
-        return get_cached_pdf(headers, file_path, decoded)
+    token = request.headers['Authorization']
+    decoded = jwt.decode(token, os.getenv('SECRET_KEY')
+                         or config['SECRET_KEY']['key'])
+    storage_database = request.headers['Storage-Database']
+    headers = {'content-type': 'application/json', 'Authorization': token,
+               "Storage-Database": storage_database}
+    file_path = item['path']
+    return get_cached_pdf(headers, file_path, decoded)
 
 
 @app.route("/check-in-cache", methods=['POST', 'GET'])
 @cross_origin()
+@check_too_big
 def check_in_cache():
     payload = request.get_json()
     item = payload['item']
-    if item['size'] > MAX_SIZE:
-        toReturn = {}
-        toReturn['isTooBig'] = 1
-        return jsonify(True)
-
     token = request.headers['Authorization']
     decoded = jwt.decode(token, os.getenv('SECRET_KEY')
                          or config['SECRET_KEY']['key'])
