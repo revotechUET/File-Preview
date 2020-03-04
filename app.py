@@ -49,6 +49,10 @@ def file_preview():
 def check_in_cache():
     payload = request.get_json()
     item = payload['item']
+    if item['size'] > MAX_SIZE:
+        toReturn = {}
+        toReturn['isTooBig'] = 1
+        return jsonify(True)
 
     token = request.headers['Authorization']
     decoded = jwt.decode(token, os.getenv('SECRET_KEY')
