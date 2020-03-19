@@ -74,7 +74,8 @@ def check_in_cache():
     cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
     cached_item = next(
         (item for item in cached_pdf[decoded['username']] if item['path'] == file_path), None)
-
+    if not cached_item:
+        return jsonify({'notCached': 1})
     return jsonify(cached_item)
 
 
