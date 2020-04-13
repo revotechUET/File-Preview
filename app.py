@@ -51,8 +51,8 @@ def file_preview():
     storage_database = request.headers['Storage-Database']
     headers = {'content-type': 'application/json', 'Authorization': token,
                "Storage-Database": storage_database}
-    file_path = item['path']
-    return get_cached_pdf(headers, file_path, decoded)
+    # file_path = item['path']
+    return get_cached_pdf(headers, item, decoded)
 
 
 @app.route("/check-in-cache", methods=['POST', 'GET'])
@@ -124,7 +124,8 @@ cached_pdf = {}
 CACHE_LIFE_TIME = 60 * 60 * 24 * 7 * 4
 
 
-def get_cached_pdf(headers, file_path, decoded):
+def get_cached_pdf(headers, item, decoded):
+    file_path = item['path']
     file_name = file_path.replace('/', '__')
     file_name_convert = file_name + '.pdf'
     cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
@@ -153,7 +154,7 @@ def get_cached_pdf(headers, file_path, decoded):
     if filedata.status_code == 200:
         with open(path_file_download, 'wb') as f:
             f.write(filedata.content)
-    if is_binary(path_file_download) and not path_file_download.lower().endswith(
+    if is_binary(path_file_download) and not item['rootName'].lower().endswith(
             ('jpg', 'JPG', 'png', 'PNG', 'jpeg', 'JPEG', 'gif', 'GIF',
             'bmp', 'BMP', 'svg', 'SVG', 'pdf', 'las', 'asc', 'LAS', 'TXT',
             'ASC', 'csv', 'CSV', 'xlsx', 'XLSX', 'XLS', 'xls', 'ppt', 'PPT',
