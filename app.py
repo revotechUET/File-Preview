@@ -8,6 +8,7 @@ import PyPDF2
 import jwt
 import configparser
 import functools
+import pathlib
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from datetime import datetime
@@ -126,7 +127,7 @@ CACHE_LIFE_TIME = 60 * 60 * 24 * 7 * 4
 
 def get_cached_pdf(headers, item, decoded):
     file_path = item['path']
-    file_name = file_path.replace('/', '__')
+    file_name = file_path.replace('/', '__') + pathlib.Path(item['rootName']).suffix
     file_name_convert = file_name + '.pdf'
     cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
     cached_item = next(
