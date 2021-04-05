@@ -12,7 +12,7 @@ import pathlib
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from datetime import datetime
-from convertFile import ConvertFile#, ConvertFileExcel
+from convertFile import ConvertFile  # , ConvertFileExcel
 from sendRequest import SendRequest
 from binaryornot.check import is_binary
 
@@ -37,7 +37,6 @@ def check_too_big(func):
             return toReturn
         return func()
     return wrapper_check_too_big
-
 
 
 @app.route("/filepreview", methods=['POST', 'GET'])
@@ -93,7 +92,7 @@ def remove_file_in_cache():
     headers = {'content-type': 'application/json', 'Authorization': token,
                "Storage-Database": storage_database}
     file_path = payload['path']
-# 
+#
     file_name = file_path.replace('/', '__')
     file_name_convert = file_name + '.pdf'
     cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
@@ -127,7 +126,8 @@ CACHE_LIFE_TIME = 60 * 60 * 24 * 7 * 4
 
 def get_cached_pdf(headers, item, decoded):
     file_path = item['path']
-    file_name = file_path.replace('/', '__') + pathlib.Path(item['rootName']).suffix
+    file_name = file_path.replace('/', '__') \
+        + pathlib.Path(item['rootName']).suffix
     file_name_convert = file_name + '.pdf'
     cached_pdf[decoded['username']] = cached_pdf.get(decoded['username']) or []
     cached_item = next(
@@ -151,21 +151,22 @@ def get_cached_pdf(headers, item, decoded):
     url = response.json()['url']
     filedata = requests.get(url)
     if filedata.status_code == 404:
-        return 'NO FILE PREVIEW'
+        return "NO FILE PREVIEW"
     if filedata.status_code == 200:
         with open(path_file_download, 'wb') as f:
             f.write(filedata.content)
     if is_binary(path_file_download) and not item['rootName'].lower().endswith(
             ('jpg', 'JPG', 'png', 'PNG', 'jpeg', 'JPEG', 'gif', 'GIF',
-            'bmp', 'BMP', 'svg', 'SVG', 'pdf', 'las', 'asc', 'LAS', 'TXT',
-            'ASC', 'csv', 'CSV', 'xlsx', 'XLSX', 'XLS', 'xls', 'ppt', 'PPT',
-            'pptx', 'PPTX', 'doc', 'DOC', 'docx', 'DOCX')):
+             'bmp', 'BMP', 'svg', 'SVG', 'pdf', 'las', 'asc', 'LAS', 'TXT',
+             'ASC', 'csv', 'CSV', 'xlsx', 'XLSX', 'XLS', 'xls', 'ppt', 'PPT',
+             'pptx', 'PPTX', 'doc', 'DOC', 'docx', 'DOCX',
+             'mpp')):
         return {'isNotReadable': 1}
     try:
         PyPDF2.PdfFileReader(open(path_file_download, "rb"))
     except PyPDF2.utils.PdfReadError:
         # if path_file_download.lower().endswith(('xlsx', 'xls', 'csv')):
-            # ConvertFileExcel(path_file_download)
+        # ConvertFileExcel(path_file_download)
         # else:
         ConvertFile(path_file_download)
     else:
@@ -173,7 +174,12 @@ def get_cached_pdf(headers, item, decoded):
     cached_item['path'] = file_path
     cached_item['ts'] = datetime.now()
     cached_pdf[decoded['username']].append(cached_item)
-    return base64.b64encode(open(path_file_converted, "rb").read())
+    try:
+        readFile = open(path_file_converted, "rb")
+    except IOError:
+        return "NO PDF FILE TO PREVIEW"
+    else:
+        return base64.b64encode(open(path_file_converted, "rb").read())
 
 
 def main(argv):
