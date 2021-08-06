@@ -5,14 +5,15 @@ WORKDIR /app
 COPY . .
 
 RUN apk --no-cache add libreoffice \
-           	ttf-droid-nonlatin \
-            ttf-droid \
-            ttf-dejavu \
-            ttf-freefont \
-            ttf-liberation \
-        && rm -rf /var/cache/apk/* \
-        && pip install -r requirements.txt \
-        && mkdir -p uploads
+    ttf-droid-nonlatin \
+    ttf-droid \
+    ttf-dejavu \
+    ttf-freefont \
+    ttf-liberation \
+    && rm -rf /var/cache/apk/* \
+    && pip install -r requirements.txt \
+    && mkdir -p uploads \
+    && apk add wkhtmltopdf
 
 ENV BUDGET_URL=https://users.i2g.cloud
 ENV SERVICE=WI_PROJECT_STORAGE
