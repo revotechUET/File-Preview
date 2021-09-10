@@ -9,5 +9,5 @@ docker build -t file-preview .
 ### Run container
 
 ```
-docker run -p 5000:5000 file-preview
+docker run -it -p 5000:5000 file-preview
 ```
