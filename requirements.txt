@@ -10,7 +10,7 @@ idna==2.8
 #img2pdf==0.3.3
 itsdangerous==1.1.0
 Jinja2==2.10.3
-PyJWT==1.5.3
+PyJWT==2.4.0
 PyPDF2==1.26.0
 requests==2.22.0
 six==1.13.0
