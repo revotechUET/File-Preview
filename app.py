@@ -171,14 +171,14 @@ def get_cached_pdf(headers, item, decoded):
         ConvertFile(path_file_download)
     else:
         path_file_converted = path_file_download
-    cached_item['path'] = file_path
-    cached_item['ts'] = datetime.now()
-    cached_pdf[decoded['username']].append(cached_item)
     try:
         readFile = open(path_file_converted, "rb")
     except IOError:
         return "NO PDF FILE TO PREVIEW"
     else:
+        cached_item['path'] = file_path
+        cached_item['ts'] = datetime.now()
+        cached_pdf[decoded['username']].append(cached_item)
         return base64.b64encode(open(path_file_converted, "rb").read())
 
 
